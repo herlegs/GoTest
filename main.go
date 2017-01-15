@@ -1,9 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"github.com/herlegs/GoTest/reflection"
 )
 
+type private struct{
+	Name string
+}
+
 func main(){
-	fmt.Println("hello world")
+	dto := &private{Name:"name"}
+	reflection.IsSettable(dto)
 }
