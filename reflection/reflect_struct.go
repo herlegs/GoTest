@@ -3,6 +3,7 @@ package reflection
 import (
 	"reflect"
 	"fmt"
+	"encoding/json"
 )
 
 type book struct{
@@ -10,6 +11,19 @@ type book struct{
 	Content string
 	pages int
 }
+
+type gift struct{
+	Note string
+	book
+}
+
+func UnmarshalStruct(str string, dto interface{}){
+	err := json.Unmarshal([]byte(str), dto)
+	if(err != nil){
+		fmt.Println("error:",err)
+	}
+}
+
 
 func SetStructWithMap(dto interface{}, vars map[string]string){
 	fmt.Println(dto)
