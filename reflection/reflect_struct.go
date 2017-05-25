@@ -12,6 +12,12 @@ type book struct{
 	pages int
 }
 
+func NewBook() *book{
+	return &book{
+		"xiao","yu",3,
+	}
+}
+
 type gift struct{
 	Note string
 	book
