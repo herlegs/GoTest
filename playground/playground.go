@@ -5,10 +5,13 @@ import (
 	"sync"
 	"time"
 	"encoding/json"
+	"reflect"
 )
 
 func main(){
-	testCustomMarshal()
+	test := &Payload{}
+	testConvert(test)
+	fmt.Println(test)
 }
 
 func testLockMain(){
@@ -106,3 +109,24 @@ func testCustomMarshal(){
 	fmt.Println(custom.Eb)
 }
 
+type Payload struct {
+	Name string
+}
+
+func testConvert(payload interface{}){
+	str := `{"Name":"joe"}`
+	p := &Payload{}
+	_ = json.Unmarshal([]byte(str), p)
+
+	var pI interface{}
+	pI = p
+
+	fmt.Println(pI)
+
+	pIv := reflect.ValueOf(pI).Elem()
+
+	reflect.ValueOf(payload).Elem().Set(pIv)
+	fmt.Println(payload)
+
+	//payv.Set(pIv.Addr())
+}

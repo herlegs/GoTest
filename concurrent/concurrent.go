@@ -21,22 +21,23 @@ func set(i int){
 type Runs struct {
 	m    sync.Mutex
 	done uint32
+	sync.Once
 }
 
 func (o *Runs) Do(f func()) {
-	//if old := atomic.LoadUint32(&o.done); old >= 2 {
-	//	return
-	//}
+	if old := atomic.LoadUint32(&o.done); old >= 1 {
+		return
+	}
 	// Slow-path.
 	o.m.Lock()
 	defer o.m.Unlock()
-	if o.done < 2 {
-		defer atomic.StoreUint32(&o.done, o.done + 1)
+	if o.done < 1 {
+		o.done++
 		f()
 	}
 }
 
-func main(){
+func testRunLimitedTimes(){
 	once := &Runs{}
 	for i := 0; i < 10; i++ {
 		j := i
@@ -45,6 +46,10 @@ func main(){
 		})
 	}
 	time.Sleep(time.Second*1)
+}
+
+func main(){
+	testRunLimitedTimes()
 }
 
 
