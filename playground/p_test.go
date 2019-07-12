@@ -5,62 +5,18 @@ import (
 	"container/list"
 	"fmt"
 	"math"
-	"sync"
 	"testing"
-	"time"
 )
-
-func TestName(t *testing.T) {
-	a := HasMap{
-		M: &sync.Map{},
-	}
-
-	b := a
-
-	go func() {
-		v := 0
-		for {
-			a.M.Store("k", v)
-			v = (v+2)%10
-		}
-	}()
-
-	go func() {
-		v := 1
-		for {
-			b.M.Store("k", v)
-			v = (v+2)%10
-		}
-	}()
-
-	go func(){
-	    for {
-	    	v,_ := a.M.Load("k")
-	    	fmt.Printf("a:%v\n",v)
-	    	time.Sleep(time.Second)
-		}
-	}()
-
-	go func(){
-		for {
-			v,_ := b.M.Load("k")
-			fmt.Printf("b:%v\n",v)
-			time.Sleep(time.Second)
-		}
-	}()
-
-	time.Sleep(time.Second * 10)
-}
 
 func TestHeap(t *testing.T) {
 
 }
 
 func TestVector(t *testing.T) {
-	a :="grab"
+	a := "grab"
 	b := "abgr"
-	fmt.Printf("%v\n",a[2:4]+a[0:2])
-	fmt.Printf("%T[%v]\n",b,b)
+	fmt.Printf("%v\n", a[2:4]+a[0:2])
+	fmt.Printf("%T[%v]\n", b, b)
 }
 
 func BenchmarkList(b *testing.B) {
@@ -92,10 +48,10 @@ func BenchmarkSlice(b *testing.B) {
 
 func findTheDifference(s string, t string) byte {
 	var result byte
-	for _,c := range []byte(s){
+	for _, c := range []byte(s) {
 		result ^= c
 	}
-	for _,c := range []byte(t){
+	for _, c := range []byte(t) {
 		result ^= c
 	}
 	return result
@@ -140,13 +96,13 @@ func bsLeftMost(items []int, start, end, target int) int {
 			start = mid + 1
 		}
 	}
-	return end+1
+	return end + 1
 }
 
 func TestSss(t *testing.T) {
 	//fmt.Printf("%v\n",kSimilarity("ba", "ab"))
-	s := []int{1,2,3,3,3,3,4,4,4,5}
-	fmt.Printf("%v\n",bsLeftMost(s, 0, len(s)-1, 1))
+	s := []int{1, 2, 3, 3, 3, 3, 4, 4, 4, 5}
+	fmt.Printf("%v\n", bsLeftMost(s, 0, len(s)-1, 1))
 }
 func kSimilarity(A string, B string) int {
 	if A == B {
@@ -161,8 +117,8 @@ func kSimilarity(A string, B string) int {
 		for i := 0; i < size; i++ {
 			s := queue.Front().Value.([]byte)
 			queue.Remove(queue.Front())
-			i, currPos := 0, len(B) - len(s)
-			for ; i < len(s) && currPos < len(B) && s[i] == B[currPos]; {
+			i, currPos := 0, len(B)-len(s)
+			for i < len(s) && currPos < len(B) && s[i] == B[currPos] {
 				i++
 				currPos++
 			}
@@ -194,26 +150,24 @@ func isSuffix(arr []byte, s string) bool {
 	return true
 }
 
-
-
 func TestPriorityQueue(t *testing.T) {
 	pq := NewPriorityQueue()
 
-	pq.Push(&Ele{3,3,3})
-	pq.Push(&Ele{16,16,16})
-	pq.Push(&Ele{2,2,2})
-	pq.Push( &Ele{1,1,1})
+	pq.Push(&Ele{3, 3, 3})
+	pq.Push(&Ele{16, 16, 16})
+	pq.Push(&Ele{2, 2, 2})
+	pq.Push(&Ele{1, 1, 1})
 
 	for pq.Len() != 0 {
 		ele := pq.Pop()
-		fmt.Printf("%#v\n",ele)
+		fmt.Printf("%#v\n", ele)
 	}
 }
 
 type Ele struct {
 	Val int
-	X int
-	Y int
+	X   int
+	Y   int
 }
 
 type PQ []*Ele
@@ -252,7 +206,7 @@ type priorityQueueImpl struct {
 
 func NewPriorityQueue() PriorityQueue {
 	return &priorityQueueImpl{
-		PQ:&PQ{},
+		PQ: &PQ{},
 	}
 }
 
@@ -268,11 +222,18 @@ func (pq *priorityQueueImpl) Pop() *Ele {
 	return heap.Pop(pq.PQ).(*Ele)
 }
 
-
 type segmentTreeImpl struct {
 }
 
-func TestFFFF(t *testing.T) {
-	var a, b int
+func BenchmarkName(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		qps()
+	}
+}
 
+func qps() {
+	a := uint(0)
+	for i := 0; i < 10*50*50*50*1000; i++ {
+		a *= 2
+	}
 }
