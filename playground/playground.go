@@ -2,77 +2,120 @@ package main
 
 import (
 	"fmt"
-	"sync/atomic"
+	"sync"
 	"time"
-
-	"github.com/herlegs/KafkaPlay/benchmark/rate"
 )
 
-var counter uint64
-var limiter *rate.Limiter
-
-func watcher() {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	var last uint64
-	for {
-		<-ticker.C
-		val := atomic.LoadUint64(&counter)
-		fmt.Printf("%v\n", val-last)
-		last = val
-	}
+type saramaMsgFetcher struct {
+	currIdx  int
+	outputCh chan int
+	lock     sync.Mutex
 }
 
-func adder(limiter *rate.Limiter) {
-	for {
-		t := time.Now()
-		for i := 0; i < 1; i++ {
-			if limiter.AllowN(t, 1) {
-				atomic.AddUint64(&counter, 1)
+// Start will start producing msgs to output channel
+func (s *saramaMsgFetcher) Start() {
+	go func() {
+		for {
+			s.lock.Lock()
+			select {
+			case s.outputCh <- s.currIdx:
+				s.currIdx++
+			case <-time.After(time.Millisecond * 100):
+				fmt.Printf("give up %v\n", s.currIdx)
 			}
+			s.lock.Unlock()
 		}
-
-	}
+	}()
 }
 
-type aaa struct {
-	a int
+// rewind index, and return index before rewind
+func (s *saramaMsgFetcher) Rewind(set int) int {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	prev := s.currIdx
+	s.currIdx = set
+	return prev
 }
 
 func main() {
-	//limiter = rate.NewLimiter(rate.Limit(65), 1)
-	//for i := 0; i < 10000; i++ {
-	//	go adder(limiter)
-	//}
-	//
-	//go watcher()
-	//
-	//time.Sleep(time.Minute)
-	//6-6 05:03
-
-	c := make(chan *aaa)
+	a, b := make(chan bool), make(chan bool)
 
 	go func() {
-		i := 0
+		b <- false
+	}()
+
+	go func() {
 		for {
-			i++
-			c <- &aaa{
-				a: i,
-			}
-			time.Sleep(time.Second)
-			if i > 3 {
-				close(c)
-				return
+			select {
+			case <-a:
+
+			case <-b:
+				fmt.Println("either a, b")
 			}
 		}
 	}()
 
-	for {
-		select {
-		case a := <-c:
-			fmt.Printf("%v\n", a)
-		}
-	}
+	time.Sleep(time.Second)
 
-	fmt.Printf("end\n")
+}
+
+// Rewind has no problem
+func withoutSDKLoopTest(testTime time.Duration) {
+	saramaCh := make(chan int)
+	msgFetcher := &saramaMsgFetcher{
+		outputCh: saramaCh,
+	}
+	msgFetcher.Start()
+
+	startConsumer(saramaCh, msgFetcher)
+
+	<-time.After(testTime)
+}
+
+// Rewind will fail
+func withSDKLoopTest(testTime time.Duration) {
+	saramaCh := make(chan int)
+	msgFetcher := &saramaMsgFetcher{
+		outputCh: saramaCh,
+	}
+	msgFetcher.Start()
+
+	sdkCh := make(chan int)
+	startSDKLoop(msgFetcher.outputCh, sdkCh)
+
+	startConsumer(sdkCh, msgFetcher)
+
+	<-time.After(testTime)
+}
+
+// SDK loop is same as adding a buffered channel of size 1 in between
+func startSDKLoop(saramaCh, sdkCh chan int) {
+	go func() {
+		//Both of these fails
+
+		//for i := range saramaCh {
+		//	sdkCh <- i
+		//}
+		for {
+			sdkCh <- <-saramaCh
+		}
+	}()
+}
+
+// consumer consumes msg until alert line
+func startConsumer(sdkCh chan int, fetcher *saramaMsgFetcher) {
+	alertLine := 10
+	go func() {
+		for {
+			for msg := range sdkCh {
+				if msg > alertLine {
+					panic(fmt.Sprintf("rewind failed, since got index after alert line: %v\n", msg))
+				}
+				if msg >= alertLine {
+					idx := fetcher.Rewind(0)
+					fmt.Printf("index before rewind: %v\n", idx)
+				}
+			}
+		}
+	}()
 }
