@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultTimeOut = time.Second * 3
+	defaultTimeOut = time.Second * 5
 )
 
 //HTTPGet is helper function of sending http get request with params

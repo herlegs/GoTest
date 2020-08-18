@@ -3,9 +3,15 @@ package main
 import (
 	"container/heap"
 	"container/list"
+	"context"
+	"errors"
 	"fmt"
 	"math"
+	"sync"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHeap(t *testing.T) {
@@ -236,4 +242,50 @@ func qps() {
 	for i := 0; i < 10*50*50*50*1000; i++ {
 		a *= 2
 	}
+}
+
+var timeoutErr = errors.New("context time out")
+
+func TestGetCountsBatch_Model(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	res := mockHandler(ctx, []bool{true, false})
+	require.EqualValues(t, []error{nil, timeoutErr}, res)
+}
+
+func mockHandler(ctx context.Context, calls []bool) []error {
+	n := len(calls)
+	res := make([]error, n)
+	for i := range res {
+		res[i] = timeoutErr
+	}
+	wg := &sync.WaitGroup{}
+	done := make(chan struct{})
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		idx, expect := i, calls[i]
+		go func() {
+			defer wg.Done()
+			res[idx] = mockDBDao(ctx, expect)
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+	}
+	return res
+}
+
+func mockDBDao(ctx context.Context, success bool) error {
+	if success {
+		return nil
+	}
+	// wait context expire
+	<-ctx.Done()
+	return timeoutErr
 }
