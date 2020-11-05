@@ -1,18 +1,20 @@
 syntax = "proto3";
 
-import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+//import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
 import "google/protobuf/descriptor.proto";
 
 extend google.protobuf.FieldOptions {
-    GEOType geo_type = 50002;
+    string my_type = 666666;
+    string his_type = 777777;
 }
 
 enum GEOType {
-    GEO_TYPE_ADDR = 0;
+    GEO_TYPE_ID = 0;
+    GEO_TYPE_ADDR = 999;
 }
 
 message DriverCoreData {
     int64 driverID = 1;
-    string address = 2 [(gogoproto.jsontag) = "no2"];
+    string address = 2 [(my_type) = "hahaha", (his_type)="ggg"];
 }

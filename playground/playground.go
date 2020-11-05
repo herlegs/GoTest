@@ -1,26 +1,16 @@
 package main
 
-import "runtime"
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-var hello string
-var updated bool
-
-type aaa map[string]bool
+import (
+	"encoding/base64"
+	"fmt"
+)
 
 func main() {
-	runtime.GOMAXPROCS(1)
-
-	go func() {
-		panic("already call")
-	}()
-
-	for {
+	decoded, err := base64.StdEncoding.DecodeString(base64Str)
+	if err != nil {
+		fmt.Printf("err:%v\n", err)
 	}
+	fmt.Printf("len:%v,%v\n", len(string(decoded)), string(decoded))
 }
+
+var base64Str = "eyJlbGVtZW50cyI6W3siYXR0cmlidXRlcyI6eyJlbWFpbCI6InRoZWEudGFuMDdAZ21haWwuY29tIiwiZnVsbE5hbWUiOiJNYXJpYSBSaXN0aGlhIEFwcGxlIFRhbiBDYcOxZXRlIn0sInR5cGUiOiJjdXN0b21lciIsImN1c3RvbWVyX2lkIjoiVTMxMjU0OTE5MjEifV0sInR5cGUiOiJ0cmFuc2l0aW9uIn0="
